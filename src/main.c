@@ -1,27 +1,47 @@
 #include "shell.h"
-#include <stdio.h>
 
-void save_command_in_history(char *command) {
+char *history[MAX_HISTORY];
+int history_count = 0;
+
+void load_history_from_file() {
   char *home = getenv("HOME");
-  if (!home) {
-    fprintf(stderr, "Could not get HOME directory.\n");
-    return;
-  }
+  if (!home) return;
 
   char path[1024];
   snprintf(path, sizeof(path), "%s/.seashell_history", home);
 
-  FILE *history = fopen(path, "a");
-  if (!history)  {
-    perror("Failed to open history file");
-    return;
+  FILE *history_file = fopen(path, "r");
+  if (!history_file) return;
+
+  char line[1024];
+  while (fgets(line, sizeof(line), history_file) && history_count < MAX_HISTORY) {
+    line[strcspn(line, "\n")] = 0;
+    history[history_count++] = strdup(line);
   }
 
-  fprintf(history, "%s\n", command);
-  fclose(history);
+  fclose(history_file);
+}
+
+void save_command_in_history(char *command) {
+  if (history_count < MAX_HISTORY) {
+    history[history_count++] = strdup(command);
+  }
+
+  char *home = getenv("HOME");
+  if (!home) return;
+
+  char path[1024];
+  snprintf(path, sizeof(path), "%s/.seashell_history", home);
+
+  FILE *history_file = fopen(path, "a");
+  if (!history_file) return;
+
+  fprintf(history_file, "%s\n", command);
+  fclose(history_file);
 }
 
 int main() {
+  load_history_from_file();
   char input[MAX_INPUT];
   char *argv[MAX_ARGS];
 
@@ -30,11 +50,9 @@ int main() {
     if (!fgets(input, sizeof(input), stdin)) break;
 
     input[strcspn(input, "\n")] = 0;
-
-    if (strcmp(input, "exit") == 0)
-      break;
-
     save_command_in_history(input);
+
+    if (strcmp(input, "exit") == 0) break;
 
     int argc = 0;
     char *token = strtok(input, " ");
@@ -46,6 +64,13 @@ int main() {
 
     if (argc == 0) continue;
 
+    if (strcmp(argv[0], "history") == 0) {
+      for (int i = 0; i < history_count; i++) {
+        printf("%d %s\n", i + 1, history[i]);
+      }
+      continue;
+    }
+
     pid_t pid = fork();
     if (pid == 0) {
       execvp(argv[0], argv);
@@ -56,6 +81,10 @@ int main() {
     } else {
       perror("fork failed");
     }
+  }
+
+  for (int i = 0; i < history_count; i++) {
+    free(history[i]);
   }
 
   return 0;

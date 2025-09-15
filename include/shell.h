@@ -9,5 +9,6 @@
 
 #define MAX_INPUT 1024
 #define MAX_ARGS 64
+#define MAX_HISTORY 1000
 
 #endif
