@@ -1,4 +1,7 @@
 #include "shell.h"
+#include <linux/limits.h>
+#include <stdio.h>
+#include <limits.h>
 
 char *history[MAX_HISTORY];
 int history_count = 0;
@@ -40,13 +43,31 @@ void save_command_in_history(char *command) {
   fclose(history_file);
 }
 
+void get_current_working_directory(char *cwd, size_t size) {
+  if (getcwd(cwd, size) == NULL) {
+    perror("getcwd failed");
+  }
+}
+
+void print_prompt() {
+  char cwd[PATH_MAX];
+  get_current_working_directory(cwd, sizeof(cwd));
+
+  char *home = getenv("HOME");
+  if (home && strncmp(cwd, home, strlen(home)) == 0) {
+    printf("~%s > ", cwd + strlen(home));
+  } else {
+    printf("%s > ", cwd);
+  }
+}
+
 int main() {
   load_history_from_file();
   char input[MAX_INPUT];
   char *argv[MAX_ARGS];
 
   for (;;) {
-    printf("seash > ");
+    print_prompt();
     if (!fgets(input, sizeof(input), stdin)) break;
 
     input[strcspn(input, "\n")] = 0;
