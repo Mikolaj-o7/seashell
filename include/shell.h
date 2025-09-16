@@ -6,6 +6,9 @@
 #include <string.h>
 #include <unistd.h>
 #include <sys/wait.h>
+#include <linux/limits.h>
+#include <stdio.h>
+#include <limits.h>
 
 #define MAX_INPUT 1024
 #define MAX_ARGS 64

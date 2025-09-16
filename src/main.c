@@ -1,7 +1,4 @@
 #include "shell.h"
-#include <linux/limits.h>
-#include <stdio.h>
-#include <limits.h>
 
 char *history[MAX_HISTORY];
 int history_count = 0;
@@ -49,15 +46,28 @@ void get_current_working_directory(char *cwd, size_t size) {
   }
 }
 
+void get_username(char *username, size_t size) {
+  char *user = getenv("USER");
+
+  if (user) {
+    snprintf(username, size, "%s", user);
+  } else {
+    snprintf(username, size, "unknown");
+  }
+}
+
 void print_prompt() {
   char cwd[PATH_MAX];
   get_current_working_directory(cwd, sizeof(cwd));
 
+  char username[64];
+  get_username(username, sizeof(username));
+
   char *home = getenv("HOME");
   if (home && strncmp(cwd, home, strlen(home)) == 0) {
-    printf("~%s > ", cwd + strlen(home));
+    printf("%s:~%s > ", username, cwd + strlen(home));
   } else {
-    printf("%s > ", cwd);
+    printf("%s:%s > ", username, cwd);
   }
 }
 
