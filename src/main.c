@@ -56,6 +56,13 @@ void get_username(char *username, size_t size) {
   }
 }
 
+void get_hostname(char *hostname, size_t size) {
+  if (gethostname(hostname, size) != 0) {
+    perror("gethostname failed");
+    snprintf(hostname, size, "unknown");
+  }
+}
+
 void print_prompt() {
   char cwd[PATH_MAX];
   get_current_working_directory(cwd, sizeof(cwd));
@@ -63,11 +70,14 @@ void print_prompt() {
   char username[64];
   get_username(username, sizeof(username));
 
+  char hostname[64];
+  get_hostname(hostname, sizeof(hostname));
+
   char *home = getenv("HOME");
   if (home && strncmp(cwd, home, strlen(home)) == 0) {
-    printf("%s:~%s > ", username, cwd + strlen(home));
+    printf("%s@%s:~%s > ", username, hostname, cwd + strlen(home));
   } else {
-    printf("%s:%s > ", username, cwd);
+    printf("%s@%s:%s > ", username, hostname, cwd);
   }
 }
 
